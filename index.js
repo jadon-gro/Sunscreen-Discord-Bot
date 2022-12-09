@@ -70,6 +70,7 @@ function scheduleReminder(time, channel) {
         const item = searchResults["shopping_results"][Number(searchResults['index'])];
         channel.send("Hello Friends! Please remember to wear your sunscreen today! \n\nMay I suggest: \n" + item["title"] + " for " + item["price"] + "? \n" + item["link"]);
     });
+    console.log("scheduled at " + time + ":00 EST");
 }
 
 
