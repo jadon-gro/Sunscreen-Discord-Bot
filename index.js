@@ -4,12 +4,12 @@ import { Client, GatewayIntentBits, Routes, SlashCommandBuilder, ChannelType } f
 import { REST } from '@discordjs/rest';
 import schedule from 'node-schedule';
 import fs from 'fs';
-import { dumpSunscreenToJson } from './imgService.js'
+import { dumpSunscreenToJson } from './searchService.js'
 
 const commands = [
     new SlashCommandBuilder()
     .setName('schedule')
-    .setDescription('Schedules a message')
+    .setDescription('Sets the time for the reminder!')
     .addIntegerOption(option => 
         option
             .setName("time")
@@ -60,7 +60,7 @@ client.on('interactionCreate', (interaction) => {
             const channel = interaction.options.getChannel('channel');
 
             interaction.reply({
-                content: `Your message has been scheduled for ${time}:00 EST`
+                content: `I will remind everyone every day at ${time}:00 EST!`
             })
             var searchResults;
             if (!fs.existsSync("Sunscreen_Search_Results.json")) {
@@ -79,12 +79,12 @@ client.on('interactionCreate', (interaction) => {
                 });
             }
             const item = searchResults["shopping_results"][Number(searchResults['index'])];
-            schedule.scheduleJob('39 ' + time + ' * * *', () => {
-                channel.send("Hello Friends! Please remember to wear your sunscreen! \nMay I suggest " + item["title"] + " for " + item["price"] + "? \n" + item["link"]);
+            schedule.scheduleJob('0 ' + time + ' * * *', () => {
+                channel.send("Hello Friends! Please remember to wear your sunscreen today! \n\nMay I suggest: \n" + item["title"] + " for " + item["price"] + "? \n" + item["link"]);
             });
             break;
         case 'info':
-            interaction.reply("This was a bot made by Jadon! You can see my code here: \nhttps://github.com/jadon-gro/Sunscreen-Discord-Bot");
+            interaction.reply("I was made by Jadon! You can see my code here: \nhttps://github.com/jadon-gro/Sunscreen-Discord-Bot");
     }
 
     
