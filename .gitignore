@@ -102,3 +102,9 @@ dist
 
 # TernJS port file
 .tern-port
+
+# And ofc
+.DSstore
+
+# search cache
+Sunscreen_Search_Results.json
