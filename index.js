@@ -5,6 +5,7 @@ import { REST } from '@discordjs/rest';
 import schedule from 'node-schedule';
 import fs from 'fs';
 import { dumpSunscreenToJson } from './searchService.js'
+import { scheduler } from 'timers/promises';
 
 const commands = [
     new SlashCommandBuilder()
@@ -47,7 +48,29 @@ client.on('ready', () => {
 });
 
 
-
+function scheduleReminder(time, channel) {
+    var date = new Date(new Date().getTime + 1000);
+    schedule.scheduleJob('0 ' + time + ' * * *', () => {
+        var searchResults;
+        if (!fs.existsSync("Sunscreen_Search_Results.json")) {
+            dumpSunscreenToJson();
+        }
+        var text = fs.readFileSync('Sunscreen_Search_Results.json', 'utf-8' )
+        searchResults = JSON.parse(text.toString())
+        if (searchResults['index'] + 2 >= searchResults['shopping_results'].length) {
+            dumpSunscreenToJson();
+        } else {
+            searchResults['index'] += 1;
+            fs.writeFile('Sunscreen_Search_Results.json', JSON.stringify(searchResults), err => {
+                if (err) {
+                    throw err;
+                }
+            });
+        }
+        const item = searchResults["shopping_results"][Number(searchResults['index'])];
+        channel.send("Hello Friends! Please remember to wear your sunscreen today! \n\nMay I suggest: \n" + item["title"] + " for " + item["price"] + "? \n" + item["link"]);
+    });
+}
 
 
 client.on('interactionCreate', (interaction) => {
@@ -58,30 +81,18 @@ client.on('interactionCreate', (interaction) => {
         case 'schedule':
             const time = interaction.options.getInteger('time');
             const channel = interaction.options.getChannel('channel');
+            const config = {
+                "time": time,
+                "channel": channel
+            }
+            fs.writeFileSync('config.json', JSON.stringify(config));
+            
 
             interaction.reply({
                 content: `I will remind everyone every day at ${time}:00 EST!`
             })
-            var searchResults;
-            if (!fs.existsSync("Sunscreen_Search_Results.json")) {
-                dumpSunscreenToJson();
-            }
-            var text = fs.readFileSync('Sunscreen_Search_Results.json', 'utf-8' )
-            searchResults = JSON.parse(text.toString())
-            if (searchResults['index'] + 2 >= searchResults['shopping_results'].length) {
-                dumpSunscreenToJson();
-            } else {
-                searchResults['index'] += 1;
-                fs.writeFile('Sunscreen_Search_Results.json', JSON.stringify(searchResults), err => {
-                    if (err) {
-                        throw err;
-                    }
-                });
-            }
-            const item = searchResults["shopping_results"][Number(searchResults['index'])];
-            schedule.scheduleJob('0 ' + time + ' * * *', () => {
-                channel.send("Hello Friends! Please remember to wear your sunscreen today! \n\nMay I suggest: \n" + item["title"] + " for " + item["price"] + "? \n" + item["link"]);
-            });
+            
+            scheduleReminder(time, channel);
             break;
         case 'info':
             interaction.reply("I was made by Jadon! You can see my code here: \nhttps://github.com/jadon-gro/Sunscreen-Discord-Bot");
@@ -97,8 +108,11 @@ client.on('interactionCreate', (interaction) => {
 })
 
 async function main() {
+    if (fs.existsSync('config.json')) {
+        let config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
+        scheduleReminder(config['time'], config['channel']);
+    }
     try {
-        
         await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), {
             body: commands,
         });

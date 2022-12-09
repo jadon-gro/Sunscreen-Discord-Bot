@@ -108,3 +108,6 @@ dist
 
 # search cache
 Sunscreen_Search_Results.json
+
+# previous scheduled events
+config.json
